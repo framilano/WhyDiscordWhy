@@ -7,5 +7,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install pyinstaller
-      - run: pip install -r requirements.txt
-      - run: pyinstaller --noconfirm --onedir --windowed --add-data "c:\users\%USERNAME%\appdata\local\programs\python\python312\lib\site-packages/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
+      - run: pip install --target deps -r requirements.txt
+      - run: pyinstaller --noconfirm --onedir --windowed --add-data "deps/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
