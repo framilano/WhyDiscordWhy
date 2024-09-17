@@ -8,10 +8,9 @@ jobs:
       - name: Build executable
         uses: actions/checkout@v4
       - run: |
-          ls C:\Users
           pip install pyinstaller
           pip install -r requirements.txt
-          pyinstaller --noconfirm --onedir --windowed --add-data "C:/Users/%username%/Local/Programs/Python/Python39/Lib/site-packages/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
+          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
       #- name: Zip package
       #  run: |
       #    Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
