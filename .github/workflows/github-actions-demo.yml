@@ -25,7 +25,7 @@ jobs:
       - name: Publish package
         uses: actions/upload-artifact@v4
         with:
-          name: whydiscordwhy-windows-${SHORT_SHA}
+          name: whydiscordwhy-windows-${SHORT_SHA}"
           path: dist/whydiscordwhy
 
 
