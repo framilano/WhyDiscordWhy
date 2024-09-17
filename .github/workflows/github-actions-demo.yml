@@ -5,9 +5,9 @@ jobs:
   windows-release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Build executable
-        run: |
+        uses: actions/checkout@v4
+      - run: |
           pip install pyinstaller
           pip install --target deps -r requirements.txt
           pyinstaller --noconfirm --onedir --windowed --add-data "deps/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
@@ -15,4 +15,10 @@ jobs:
         run: |
           Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
           ls
+      - name: Publish package
+        uses: actions/upload-artifact@v4
+        with:
+          name: whydiscordwhy-windows-${{ github.sha }}
+          path: whydiscordwhy-windows.zip
+
 
