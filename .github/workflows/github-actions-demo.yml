@@ -10,6 +10,8 @@ jobs:
   windows-release:
     runs-on: windows-latest
     steps:
+      - name: Compute commit SHORT_SHA
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Build executable
         uses: actions/checkout@v4
       - run: |
@@ -23,7 +25,7 @@ jobs:
       - name: Publish package
         uses: actions/upload-artifact@v4
         with:
-          name: whydiscordwhy-windows-${{ github.sha }}
+          name: whydiscordwhy-windows-${SHORT_SHA}
           path: dist/whydiscordwhy
 
 
