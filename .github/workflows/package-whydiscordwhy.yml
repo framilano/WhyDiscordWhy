@@ -1,0 +1,32 @@
+name: Package WhyDiscordWhy
+run-name: ${{ github.actor }} said "${{ github.event.head_commit.message }}"
+on:
+  push:
+    branches:
+      - test
+    paths-ignore:
+      - '**/README.md'
+      - .gitignore
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - name: Compute commit SHORT_SHA
+        run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 8))" >> $env:GITHUB_ENV
+      - name: Build executable
+        uses: actions/checkout@v4
+      - run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
+      #- name: Zip package
+      #  run: |
+      #    Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
+      #    ls
+      - name: Publish package
+        uses: actions/upload-artifact@v4
+        with:
+          name: whydiscordwhy-windows-${{ env.SHORT_SHA }}
+          path: dist/whydiscordwhy
+
+

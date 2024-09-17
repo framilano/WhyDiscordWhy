@@ -1,3 +1,5 @@
 **.spec
 **/dist
 **/build
+**/deps
+generate_executable.bat

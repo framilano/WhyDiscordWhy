@@ -11,7 +11,7 @@ customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-bl
 
 app = customtkinter.CTk()
 app.geometry("670x300")
-app.title("WhyDiscordWhy?")
+app.title("Why Discord, why?")
 app.resizable(False, False)
 
 MAX_SIZE_MB = 10
