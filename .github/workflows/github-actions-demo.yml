@@ -1,5 +1,5 @@
 name: Package WhyDiscordWhy
-run-name: ${{ github.actor }} said <"${{ github.event.head_commit.message }}">
+run-name: ${{ github.actor }} said "${{ github.event.head_commit.message }}"
 on: [push]
 jobs:
   windows-release:
@@ -11,14 +11,14 @@ jobs:
           pip install pyinstaller
           pip install --target deps -r requirements.txt
           pyinstaller --noconfirm --onedir --windowed --add-data "deps/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
-      - name: Zip package
-        run: |
-          Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
-          ls
+      #- name: Zip package
+      #  run: |
+      #    Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
+      #    ls
       - name: Publish package
         uses: actions/upload-artifact@v4
         with:
           name: whydiscordwhy-windows-${{ github.sha }}
-          path: whydiscordwhy-windows.zip
+          path: dist/whydiscordwhy
 
 
