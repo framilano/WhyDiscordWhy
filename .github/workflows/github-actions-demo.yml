@@ -1,6 +1,11 @@
 name: Package WhyDiscordWhy
 run-name: ${{ github.actor }} said "${{ github.event.head_commit.message }}"
-on: [push]
+on:
+  push:
+    branches:
+      - test
+    paths-ignore:
+      - '**/README.md'
 jobs:
   windows-release:
     runs-on: windows-latest
