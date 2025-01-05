@@ -165,7 +165,5 @@ selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
 progresslabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
 
-get_selected_encoding_hw()
-
 app.protocol("WM_DELETE_WINDOW",  on_close)
 app.mainloop()
