@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} said "${{ github.event.head_commit.message }}"
 on:
   push:
     branches:
-      - test
+      - main
     paths-ignore:
       - '**/README.md'
       - .gitignore
