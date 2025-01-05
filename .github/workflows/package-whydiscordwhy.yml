@@ -17,7 +17,7 @@ jobs:
           sudo apt-get -y install python3-tk
           pip install pyinstaller
           pip install -r requirements.txt
-          pyinstaller --noconfirm --onedir --windowed --collect-all customtkinter whydiscordwhy.py
+          pyinstaller --noconfirm --onefile whydiscordwhy.py
       - name: Publish package
         uses: actions/upload-artifact@v4
         with:
