@@ -8,25 +8,15 @@ on:
       - '**/README.md'
       - .gitignore
 jobs:
-  windows-release:
-    runs-on: windows-latest
+  pyinstaller-build:
+    runs-on: <windows-latest / ubuntu-latest / ..... etc>
     steps:
-      - name: Compute commit SHORT_SHA
-        run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 8))" >> $env:GITHUB_ENV
-      - name: Build executable
-        uses: actions/checkout@v4
-      - run: |
-          pip install pyinstaller
-          pip install -r requirements.txt
-          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" --add-data "ffmpeg;ffmpeg/"  whydiscordwhy.py
-      #- name: Zip package
-      #  run: |
-      #    Compress-Archive -Path dist/whydiscordwhy/* -Destination whydiscordwhy-windows.zip
-      #    ls
-      - name: Publish package
-        uses: actions/upload-artifact@v4
+      - name: Create Executable
+        uses: sayyid5416/pyinstaller@v1
         with:
-          name: whydiscordwhy-windows-${{ env.SHORT_SHA }}
-          path: dist/whydiscordwhy
-
+          python_ver: '3.6'
+          spec: 'whydiscordwhy.spec'
+          requirements: 'requirements.txt'
+          upload_exe_with_name: 'whydiscordwhy'
+          options: --onefile, --name "Why Discord, why"
 
