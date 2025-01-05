@@ -16,7 +16,7 @@ jobs:
       - run: |
           pip install pyinstaller
           pip install -r requirements.txt
-          pyinstaller --noconfirm --onedir --windowed whydiscordwhy.py
+          pyinstaller --noconfirm --onedir --windowed --add-data "/usr/lib/python3.10/site-packages/customtkinter;customtkinter/" whydiscordwhy.py
       - name: Publish package
         uses: actions/upload-artifact@v4
         with:
