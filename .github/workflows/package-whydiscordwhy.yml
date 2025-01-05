@@ -3,20 +3,36 @@ run-name: ${{ github.actor }} said "${{ github.event.head_commit.message }}"
 on:
   push:
     branches:
-      - main
+      - test
     paths-ignore:
       - '**/README.md'
       - .gitignore
 jobs:
-  pyinstaller-build:
-    runs-on: <windows-latest / ubuntu-latest / ..... etc>
+  windows-release:
+    runs-on: windows-latest
     steps:
-      - name: Create Executable
-        uses: sayyid5416/pyinstaller@v1
+      - name: Build executable
+        uses: actions/checkout@v4
+      - run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" whydiscordwhy.py
+      - name: Publish package
+        uses: actions/upload-artifact@v4
         with:
-          python_ver: '3.6'
-          spec: 'whydiscordwhy.spec'
-          requirements: 'requirements.txt'
-          upload_exe_with_name: 'whydiscordwhy'
-          options: --onefile, --name "Why Discord, why"
-
+          name: whydiscordwhy-windows-x64
+          path: dist/whydiscordwhy
+  linux-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build executable
+        uses: actions/checkout@v4
+      - run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" whydiscordwhy.py
+      - name: Publish package
+        uses: actions/upload-artifact@v4
+        with:
+          name: whydiscordwhy-linux
+          path: dist/whydiscordwhy
