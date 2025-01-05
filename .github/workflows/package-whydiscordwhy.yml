@@ -8,6 +8,20 @@ on:
       - '**/README.md'
       - .gitignore
 jobs:
+  linux-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build executable
+        uses: actions/checkout@v4
+      - run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+          pyinstaller --noconfirm --onedir --windowed --add-data "/usr/lib/python3.13/site-packages/customtkinter;customtkinter/" whydiscordwhy.py
+      - name: Publish package
+        uses: actions/upload-artifact@v4
+        with:
+          name: whydiscordwhy-linux
+          path: dist/whydiscordwhy
   windows-release:
     runs-on: windows-latest
     steps:
@@ -21,18 +35,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: whydiscordwhy-windows-x64
-          path: dist/whydiscordwhy
-  linux-release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build executable
-        uses: actions/checkout@v4
-      - run: |
-          pip install pyinstaller
-          pip install -r requirements.txt
-          pyinstaller --noconfirm --onedir --windowed --add-data "c:\hostedtoolcache\windows\python\3.9.13\x64\lib\site-packages/customtkinter;customtkinter/" whydiscordwhy.py
-      - name: Publish package
-        uses: actions/upload-artifact@v4
-        with:
-          name: whydiscordwhy-linux
           path: dist/whydiscordwhy
