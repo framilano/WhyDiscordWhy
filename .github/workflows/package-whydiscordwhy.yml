@@ -14,7 +14,7 @@ jobs:
       - name: Build executable
         uses: actions/checkout@v4
       - run: |
-          apt-get install python3-tk
+          sudo apt-get -y install python3-tk
           pip install pyinstaller
           pip install -r requirements.txt
           pyinstaller --noconfirm --onedir --windowed --collect-all customtkinter whydiscordwhy.py
