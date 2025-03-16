@@ -1,0 +1,1 @@
+pyinstaller --noconsole --add-data "./ffmpeg;ffmpeg" whydiscordwhy.py
