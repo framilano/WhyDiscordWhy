@@ -14,8 +14,8 @@ https://github.com/user-attachments/assets/043ffb47-97ac-41b8-a21e-4ad11fa2cc59
 
 ## Args
 You can define different encoders as command line arguments, check ffmpeg docs to see which codecs are available:
-- `--amd_codec h264_amf` to use AMD X264 as encoder
-- `--nvidia_codec h264_nvenc` to use Nvidia X264 as encoder
-- `--intel_codec h264_qsv` to use Intel X264 as encoder
+- `--amd-codec h264_amf` to use AMD X264 as encoder
+- `--nvidia-codec h264_nvenc` to use Nvidia X264 as encoder
+- `--intel-codec h264_qsv` to use Intel X264 as encoder
 
 Or just the default hevc ones, you don't have to specify any cli arg for this
