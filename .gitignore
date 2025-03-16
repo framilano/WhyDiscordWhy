@@ -1,5 +1,5 @@
-**.spec
-**/dist
-**/build
-**/deps
-generate_executable.bat
+build
+dist
+venv
+*.spec
+ffmpeg

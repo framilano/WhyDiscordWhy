@@ -43,7 +43,8 @@ def compute_bitrate(filename, encoding_hw):
     try: seconds = ceil(frames / fps) 
     except (ZeroDivisionError): return None
 
-    target_size = MAX_SIZE_MB * 0.9 if encoding_hw == "cpu" else MAX_SIZE_MB * 0.75
+    #target_size = MAX_SIZE_MB * 0.9 if encoding_hw == "cpu" else MAX_SIZE_MB * 0.75
+    target_size = MAX_SIZE_MB * 0.9
 
     print("MAXSIZEMB: ", MAX_SIZE_MB)
     print("SECONDS: ", seconds)
@@ -57,8 +58,9 @@ def get_selected_encoding_hw():
     if radio_encoder_var.get() == 4: return "intel_hevc"
 
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
+    file_format = filename.split('.')[-1]
     ffmpeg_path = path.dirname(__file__) + "/ffmpeg/ffmpeg"
-    result_filename = filename.replace(".mp4", f"-{encoding_hw}-compressed.mp4")
+    result_filename = filename.replace(f".{file_format}", f"-{encoding_hw}-compressed.mp4")
 
     ffmpeg_args = {
         "cpu": {
@@ -78,7 +80,6 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
 
 
     try:
-        change_buttons_status("disabled")
         if (encoding_hw == "cpu"):
             progresslabel.configure(text="Generating video info 🕒")
             progresslabel.configure(text_color=yellow)
@@ -94,7 +95,7 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
         progresslabel.configure(text="Error during video encoding ❌")
         progresslabel.configure(text_color=red)
 
-        if path.isfile(result_filename): remove(result_filename)
+        if path.isfile(result_filename) and result_filename != filename: remove(result_filename)
     except(FileNotFoundError):
         progresslabel.configure(text="Couldn't find ffmpeg ❌")
         progresslabel.configure(text_color=red)
