@@ -70,7 +70,7 @@ def get_selected_encoding_hw():
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     file_format = filename.split('.')[-1]
     ffmpeg_path = path.dirname(__file__) + "/ffmpeg/ffmpeg"
-    result_filename = filename.replace(f".{file_format}", f"-{encoding_hw}-compressed.mp4")
+    result_filename = filename.replace(f".{file_format}", f"-{encoding_hw}-compressed.{file_format}")
 
     ffmpeg_args = {
         "cpu": {
@@ -126,6 +126,9 @@ def selectfile():
     bitrate = compute_bitrate(filename, encoding_hw)
     print("BITRATE: ", bitrate)
     print("ENCODING_HW: ", encoding_hw)
+
+    #Disabling select button after selecting a file
+    change_buttons_status("disabled")
 
     if (bitrate):
         selectfilebutton.configure(text = filename.split("/")[-1])
