@@ -1,16 +1,16 @@
 import customtkinter
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, check_call, CREATE_NO_WINDOW
+from subprocess import CalledProcessError, STDOUT, check_call
 from threading import Thread
 from os import path, remove
 from psutil import process_iter
+from sys import argv
 
-customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
+customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
 app = customtkinter.CTk()
-app.geometry("670x300")
 app.title("Why Discord, why?")
 app.resizable(False, False)
 
@@ -52,10 +52,20 @@ def compute_bitrate(filename, encoding_hw):
     return floor(target_size * 8388.608 / seconds) - 64
 
 def get_selected_encoding_hw():
-    if radio_encoder_var.get() == 1: return "cpu"
-    if radio_encoder_var.get() == 2: return "amd_hevc"
-    if radio_encoder_var.get() == 3: return "nvidia_hevc"
-    if radio_encoder_var.get() == 4: return "intel_hevc"
+    if radio_encoder_var.get() == 1:
+        return "cpu"
+    if radio_encoder_var.get() == 2:
+        if ("--amd_codec" in argv):
+            return argv[argv.index("--amd_codec")+1]
+        return "amd_hevc"
+    if radio_encoder_var.get() == 3: 
+        if ("--nvidia_codec" in argv):
+            return argv[argv.index("--nvidia_codec")+1]
+        return "nvidia_hevc"
+    if radio_encoder_var.get() == 4:
+        if ("--intel_codec" in argv):
+            return argv[argv.index("--intel_codec")+1]
+        return "intel_hevc"
 
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     file_format = filename.split('.')[-1]
@@ -67,14 +77,8 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
             "pass1": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-x265-params", "pass=1", "-an", "-f", "mp4", "NUL"],
             "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-x265-params", "pass=2", "-c:a", "aac", "-b:a", "64k", result_filename]
         },
-        "amd_hevc": {
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "hevc_amf", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-c:a", "aac", "-b:a", "64k", result_filename],
-        },
-        "nvidia_hevc": {
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "hevc_nvenc", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-c:a", "aac", "-b:a", "64k", result_filename],
-        },
-        "intel_hevc": {
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "hevc_qsv", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-c:a", "aac", "-b:a", "64k", result_filename],
+        "gpu": {
+            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", encoding_hw, "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-c:a", "aac", "-b:a", "64k", result_filename],
         }
     }
 
@@ -83,11 +87,14 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
         if (encoding_hw == "cpu"):
             progresslabel.configure(text="Generating video info 🕒")
             progresslabel.configure(text_color=yellow)
-            check_call(ffmpeg_args[encoding_hw]["pass1"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-        
-        progresslabel.configure(text="Encoding compressed video 🎞️")
-        progresslabel.configure(text_color=orange)
-        check_call(ffmpeg_args[encoding_hw]["pass2"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT)
+            progresslabel.configure(text="Encoding compressed video 🎞️")
+            progresslabel.configure(text_color=orange)
+            check_call(ffmpeg_args["cpu"]["pass2"], cwd=filepath, stderr=STDOUT)
+        else:
+            progresslabel.configure(text="Encoding compressed video 🎞️")
+            progresslabel.configure(text_color=orange)
+            check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT)
         
         progresslabel.configure(text="Encoding completed 💯")
         progresslabel.configure(text_color=green)
@@ -158,7 +165,6 @@ selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan
 
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
 progresslabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
-
 
 app.protocol("WM_DELETE_WINDOW",  on_close)
 app.mainloop()
