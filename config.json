@@ -1,0 +1,6 @@
+{
+    "target_size_mb": 10,
+    "encoding_hw": 1,
+    "hw_ffmpeg_codec": "libx265",
+    "theme_file_name": "theme.json"
+}

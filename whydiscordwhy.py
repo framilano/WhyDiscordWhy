@@ -1,29 +1,60 @@
 import customtkinter
+from tkinterdnd2 import TkinterDnD, DND_ALL
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, check_call
+from subprocess import CalledProcessError, STDOUT, check_call, CREATE_NO_WINDOW
 from threading import Thread
 from os import path, remove, startfile
 from psutil import process_iter
-from sys import argv
+from json import load
 
-customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
-customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+#Loading config file
+config = load(open(path.dirname(__file__).replace("\\_internal", "") + "/config.json", "r"))
 
-app = customtkinter.CTk()
-app.title("Why Discord, why?")
+#Constructor for customtkinter that works with tkinterdnd2
+class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.TkdndVersion = TkinterDnD._require(self)
+
+#Map of texts
+texts = {
+    "title": "Why Discord, why?",
+    "select_input": "Select clip to compress\n(or drop it over this box)",
+    "first_step_encoding": "Generating video info 🕒",
+    "second_step_encoding": "Encoding compressed video 🎞️",
+    "encoding_completed": "Encoding completed 💯",
+    "encoding_error": "Error during video encoding ❌",
+    "ffmpeg_not_found": "Couldn't find ffmpeg ❌",
+    "file_not_found": "Doesn't look like a video file to me ⁴⁰⁴",
+    "description": "CPU is slower but more precise, GPU is way faster, but could generate results bigger than target size"
+}
+
+#APP code starts here
+
+customtkinter.set_appearance_mode("system")  # Modes: system (default), light, dark
+customtkinter.set_default_color_theme(path.dirname(__file__).replace("\\_internal", "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
+
+app = CTk()
+app.iconbitmap("icon.ico")
+app.title(texts["title"])
 app.resizable(False, False)
 
-MAX_SIZE_MB = 10
+MAX_SIZE_MB = config["target_size_mb"]
 
-red = "#FF8A8A"
+red = "#DC143C"
 yellow = "#FCDC94"
-green = "#A5DD9B"
+green = "#008000"
 orange = "#FFBE98"
-blue = "#2463aa"
+blue = "#1E90FF"
 
 # Defines which radio button is currently selected
-radio_encoder_var = customtkinter.IntVar(value=1)
+radio_encoder_var = customtkinter.IntVar(value=config["encoding_hw"])
+
+def get_dnd_path(event):
+    dropped_file = event.data.replace("{","").replace("}", "")
+    print(dropped_file)
+    select_file_to_compress(dropped_file)
 
 def change_buttons_status(status):
     selectfilebutton.configure(state=status)
@@ -52,20 +83,11 @@ def compute_bitrate(filename, encoding_hw):
     return floor(target_size * 8388.608 / seconds) - 64
 
 def get_selected_encoding_hw():
-    if radio_encoder_var.get() == 1:
-        return "cpu"
-    if radio_encoder_var.get() == 2:
-        if ("--amd-codec" in argv):
-            return argv[argv.index("--amd-codec")+1]
-        return "hevc_amf"
-    if radio_encoder_var.get() == 3: 
-        if ("--nvidia-codec" in argv):
-            return argv[argv.index("--nvidia-codec")+1]
-        return "hevc_nvenc"
-    if radio_encoder_var.get() == 4:
-        if ("--intel-codec" in argv):
-            return argv[argv.index("--intel-codec")+1]
-        return "hevc_qsv"
+    if (radio_encoder_var.get() == config["encoding_hw"]): return config["hw_ffmpeg_codec"]
+    if radio_encoder_var.get() == 1: return "cpu"
+    if radio_encoder_var.get() == 2: return "hevc_amf"
+    if radio_encoder_var.get() == 3: return "hevc_nvenc"
+    if radio_encoder_var.get() == 4: return "hevc_qsv"
 
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     file_format = filename.split('.')[-1]
@@ -85,30 +107,30 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
 
     try:
         if (encoding_hw == "cpu"):
-            progresslabel.configure(text="Generating video info 🕒")
+            progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT)
-            progresslabel.configure(text="Encoding compressed video 🎞️")
+            check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            progresslabel.configure(text=texts["second_step_encoding"])
             progresslabel.configure(text_color=orange)
             check_call(ffmpeg_args["cpu"]["pass2"], cwd=filepath, stderr=STDOUT)
         else:
-            progresslabel.configure(text="Encoding compressed video 🎞️")
+            progresslabel.configure(text=texts["second_step_encoding"])
             progresslabel.configure(text_color=orange)
-            check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT)
+            check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
         
-        progresslabel.configure(text="Encoding completed 💯")
+        progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)
     except(CalledProcessError):
-        progresslabel.configure(text="Error during video encoding ❌")
+        progresslabel.configure(text=texts["encoding_error"])
         progresslabel.configure(text_color=red)
 
         if path.isfile(result_filename) and result_filename != filename: remove(result_filename)
     except(FileNotFoundError):
-        progresslabel.configure(text="Couldn't find ffmpeg ❌")
+        progresslabel.configure(text=texts["ffmpeg_not_found"])
         progresslabel.configure(text_color=red)
     
     change_buttons_status("normal")
-    selectfilebutton.configure(text = "Select clip to compress")
+    selectfilebutton.configure(text = texts["select_input"])
 
     #Cleaning...
     if path.isfile(filepath + "/x265_2pass.log"): remove(filepath + "/x265_2pass.log")
@@ -119,11 +141,13 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
 
     startfile(filepath=filepath)
 
-def selectfile():
-    filename = customtkinter.filedialog.askopenfilename()
-    filepath = "/".join(filename.split("/")[0:-1])
+def select_file_to_compress(fullpath):
+    if (fullpath is None): fullpath = customtkinter.filedialog.askopenfilename()
+    print(fullpath)
+    folderpath = "/".join(fullpath.split("/")[0:-1])
+    print(folderpath)
     encoding_hw = get_selected_encoding_hw()
-    bitrate = compute_bitrate(filename, encoding_hw)
+    bitrate = compute_bitrate(fullpath, encoding_hw)
     print("BITRATE: ", bitrate)
     print("ENCODING_HW: ", encoding_hw)
 
@@ -131,11 +155,12 @@ def selectfile():
     change_buttons_status("disabled")
 
     if (bitrate):
-        selectfilebutton.configure(text = filename.split("/")[-1])
-        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(filename, bitrate, filepath, encoding_hw, ), daemon=True)
+        selectfilebutton.configure(text = fullpath.split("/")[-1])
+        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(fullpath, bitrate, folderpath, encoding_hw, ), daemon=True)
         ffmpeg_thread.start()
     else:
-        progresslabel.configure(text = "Doesn't look like a video file to me ⁴⁰⁴")
+        change_buttons_status("normal")
+        progresslabel.configure(text = texts["file_not_found"])
         progresslabel.configure(text_color="#C96868")
 
 def on_close():  
@@ -150,22 +175,24 @@ def on_close():
 
 # ----------GUI SECTION----------
 
-title_label = customtkinter.CTkLabel(master=app, text="Why Discord, why?", font=('Helvetica bold', 32), text_color=blue)
+title_label = customtkinter.CTkLabel(master=app, text=texts["title"], font=('Helvetica bold', 32))
 title_label.grid(row=0, column=0, padx=20, pady=20, columnspan=4)
 
-radiobutton_1 = customtkinter.CTkRadioButton(master=app, text="CPU (default)", variable=radio_encoder_var, value=1)
+radiobutton_1 = customtkinter.CTkRadioButton(master=app, text="CPU (SW)", variable=radio_encoder_var, value=1, font=('Helvetica bold', 18))
 radiobutton_1.grid(row=1, column=0)
-radiobutton_2 = customtkinter.CTkRadioButton(master=app, text="AMD (GPU)", variable=radio_encoder_var, value=2, text_color=red)
+radiobutton_2 = customtkinter.CTkRadioButton(master=app, text="AMD (HW)", variable=radio_encoder_var, value=2, text_color=red, font=('Helvetica bold', 18))
 radiobutton_2.grid(row=1, column=1)
-radiobutton_3 = customtkinter.CTkRadioButton(master=app, text="Nvidia (GPU)", variable=radio_encoder_var, value=3, text_color=green)
+radiobutton_3 = customtkinter.CTkRadioButton(master=app, text="Nvidia (HW)", variable=radio_encoder_var, value=3, text_color=green, font=('Helvetica bold', 18))
 radiobutton_3.grid(row=1, column=2)
-radiobutton_4 = customtkinter.CTkRadioButton(master=app, text="Intel (GPU)", variable=radio_encoder_var, value=4, text_color=blue)
+radiobutton_4 = customtkinter.CTkRadioButton(master=app, text="Intel (HW)", variable=radio_encoder_var, value=4, text_color=blue, font=('Helvetica bold', 18))
 radiobutton_4.grid(row=1, column=3)
 
-warninglabel = customtkinter.CTkLabel(master=app, text="CPU is slower but more precise, GPU is way faster, but could generate results bigger than target size", font=('Helvetica bold', 14), text_color=blue)
+warninglabel = customtkinter.CTkLabel(master=app, text=texts["description"], font=('Helvetica bold', 14))
 warninglabel.grid(row=2, column=0, padx=20, pady=20, columnspan=4)
 
-selectfilebutton = customtkinter.CTkButton(master=app, text="Select clip to compress", command=selectfile, font=('Helvetica bold', 18))
+selectfilebutton = customtkinter.CTkButton(master=app, text=texts["select_input"], command=lambda: select_file_to_compress(None), font=('Helvetica bold', 18))
+selectfilebutton.drop_target_register(DND_ALL)
+selectfilebutton.dnd_bind("<<Drop>>", get_dnd_path)
 selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
 
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
