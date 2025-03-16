@@ -3,7 +3,7 @@ from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
 from subprocess import CalledProcessError, STDOUT, check_call
 from threading import Thread
-from os import path, remove
+from os import path, remove, startfile
 from psutil import process_iter
 from sys import argv
 
@@ -55,17 +55,17 @@ def get_selected_encoding_hw():
     if radio_encoder_var.get() == 1:
         return "cpu"
     if radio_encoder_var.get() == 2:
-        if ("--amd_codec" in argv):
-            return argv[argv.index("--amd_codec")+1]
-        return "amd_hevc"
+        if ("--amd-codec" in argv):
+            return argv[argv.index("--amd-codec")+1]
+        return "hevc_amf"
     if radio_encoder_var.get() == 3: 
-        if ("--nvidia_codec" in argv):
-            return argv[argv.index("--nvidia_codec")+1]
-        return "nvidia_hevc"
+        if ("--nvidia-codec" in argv):
+            return argv[argv.index("--nvidia-codec")+1]
+        return "hevc_nvenc"
     if radio_encoder_var.get() == 4:
-        if ("--intel_codec" in argv):
-            return argv[argv.index("--intel_codec")+1]
-        return "intel_hevc"
+        if ("--intel-codec" in argv):
+            return argv[argv.index("--intel-codec")+1]
+        return "hevc_qsv"
 
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     file_format = filename.split('.')[-1]
@@ -116,6 +116,8 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     if path.isfile(filepath + "/x265_2pass.log.temp"): remove(filepath + "/x265_2pass.log.temp")
     if path.isfile(filepath + "/x265_2pass.log.cutree.temp"): remove(filepath + "/x265_2pass.log.cutree.temp")
     if path.isfile(filepath + "/ffmpeg2pass-0.log"): remove(filepath + "/ffmpeg2pass-0.log")
+
+    startfile(filepath=filepath)
 
 def selectfile():
     filename = customtkinter.filedialog.askopenfilename()
