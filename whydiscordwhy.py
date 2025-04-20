@@ -7,6 +7,7 @@ from threading import Thread
 from os import path, remove, startfile
 from psutil import process_iter
 from json import load
+from sys import argv
 
 #Loading config file
 config = load(open(path.dirname(__file__).replace("\\_internal", "") + "/config.json", "r"))
@@ -36,7 +37,7 @@ customtkinter.set_appearance_mode("system")  # Modes: system (default), light, d
 customtkinter.set_default_color_theme(path.dirname(__file__).replace("\\_internal", "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
 
 app = CTk()
-app.iconbitmap("icon.ico")
+app.iconbitmap(path.dirname(__file__).replace("\\_internal", "") + "/icon.ico")
 app.title(texts["title"])
 app.resizable(False, False)
 
@@ -197,6 +198,8 @@ selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan
 
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
 progresslabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
+
+if (len(argv) == 2): select_file_to_compress(argv[1].replace("\\", "/"))
 
 app.protocol("WM_DELETE_WINDOW",  on_close)
 app.mainloop()
