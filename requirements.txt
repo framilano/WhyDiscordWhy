@@ -1,2 +1,4 @@
 customtkinter==5.2.2
 tkinterdnd2==0.4.3
+opencv-python==4.11.0.86
+psutil==7.0.0

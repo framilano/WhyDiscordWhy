@@ -1,17 +1,23 @@
+from tkinter import PhotoImage, filedialog
 import customtkinter
 from tkinterdnd2 import TkinterDnD, DND_ALL
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, check_call, CREATE_NO_WINDOW
+from subprocess import CalledProcessError, STDOUT, check_call
+from os import path, remove, name
+if name == 'nt':
+    from subprocess import CREATE_NO_WINDOW
+    from os import startfile
 from threading import Thread
-from os import path, remove, startfile
 from psutil import process_iter
 from json import load
 from sys import argv
 
 #Loading config file
-config = load(open(path.dirname(__file__).replace("\\_internal", "") + "/config.json", "r"))
-
+internal_folder_name = ""
+if name == 'nt': internal_folder_name = internal_folder_name
+else: internal_folder_name = "/_internal"
+config = load(open(path.dirname(__file__).replace(internal_folder_name, "") + "/config.json", "r"))
 #Constructor for customtkinter that works with tkinterdnd2
 class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
     def __init__(self, *args, **kwargs):
@@ -34,10 +40,11 @@ texts = {
 #APP code starts here
 
 customtkinter.set_appearance_mode("system")  # Modes: system (default), light, dark
-customtkinter.set_default_color_theme(path.dirname(__file__).replace("\\_internal", "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
+customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
 
 app = CTk()
-app.iconbitmap(path.dirname(__file__).replace("\\_internal", "") + "/icon.ico")
+img = PhotoImage(file=path.dirname(__file__).replace(internal_folder_name, "") + "/icon.png")  
+app.iconphoto(True, img)
 app.title(texts["title"])
 app.resizable(False, False)
 
@@ -92,7 +99,7 @@ def get_selected_encoding_hw():
 
 def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     file_format = filename.split('.')[-1]
-    ffmpeg_path = path.dirname(__file__) + "/ffmpeg/ffmpeg"
+    ffmpeg_path = "ffmpeg"
     result_filename = filename.replace(f".{file_format}", f"-{encoding_hw}-compressed.{file_format}")
 
     ffmpeg_args = {
@@ -110,14 +117,16 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
         if (encoding_hw == "cpu"):
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            if name == 'nt': check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            else: check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT)
             progresslabel.configure(text=texts["second_step_encoding"])
             progresslabel.configure(text_color=orange)
             check_call(ffmpeg_args["cpu"]["pass2"], cwd=filepath, stderr=STDOUT)
         else:
             progresslabel.configure(text=texts["second_step_encoding"])
             progresslabel.configure(text_color=orange)
-            check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            if name == 'nt': check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            else: check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT)
         
         progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)
@@ -140,10 +149,17 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
     if path.isfile(filepath + "/x265_2pass.log.cutree.temp"): remove(filepath + "/x265_2pass.log.cutree.temp")
     if path.isfile(filepath + "/ffmpeg2pass-0.log"): remove(filepath + "/ffmpeg2pass-0.log")
 
-    startfile(filepath=filepath)
+    if name == 'nt': startfile(filepath=filepath)
+    else: check_call(["xdg-open", filepath])
 
 def select_file_to_compress(fullpath):
-    if (fullpath is None): fullpath = customtkinter.filedialog.askopenfilename()
+    if (fullpath is None): fullpath = filedialog.askopenfilename()
+    if fullpath == () or fullpath == '':
+        change_buttons_status("normal")
+        progresslabel.configure(text = texts["file_not_found"])
+        progresslabel.configure(text_color="#C96868") 
+        return
+    
     print(fullpath)
     folderpath = "/".join(fullpath.split("/")[0:-1])
     print(folderpath)

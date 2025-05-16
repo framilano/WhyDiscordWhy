@@ -32,3 +32,9 @@ You can define different encoders or targets size editing `config.json`:
 You can edit every single aspect of the GUI color palette editing `theme.json` (or creating new files and selecting them using the config entry `theme_file_name`).
 
 More info regarding theme editing are available [here](https://github.com/TomSchimansky/CustomTkinter/wiki/Themes)
+
+## Testing
+On Linux you need tk installed
+```
+sudo pacman -Sy --needed tk
+```
