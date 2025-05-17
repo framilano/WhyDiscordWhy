@@ -34,7 +34,7 @@ You can edit every single aspect of the GUI color palette editing `theme.json` (
 More info regarding theme editing are available [here](https://github.com/TomSchimansky/CustomTkinter/wiki/Themes)
 
 ## Testing
-On Linux you need tk installed
+On Linux you need tk installed to run this script
 ```
 sudo pacman -Sy --needed tk
 ```
