@@ -15,7 +15,7 @@ from sys import argv
 
 #Loading config file
 internal_folder_name = ""
-if name == 'nt': internal_folder_name = internal_folder_name
+if name == 'nt': internal_folder_name = "\\_internal"
 else: internal_folder_name = "/_internal"
 config = load(open(path.dirname(__file__).replace(internal_folder_name, "") + "/config.json", "r"))
 #Constructor for customtkinter that works with tkinterdnd2
@@ -43,8 +43,10 @@ customtkinter.set_appearance_mode("system")  # Modes: system (default), light, d
 customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
 
 app = CTk()
-img = PhotoImage(file=path.dirname(__file__).replace(internal_folder_name, "") + "/icon.png")  
-app.iconphoto(True, img)
+if name == 'nt': app.iconbitmap(path.dirname(__file__).replace(internal_folder_name, "") + "\\icon.ico")
+else:
+    img = PhotoImage(file=path.dirname(__file__).replace(internal_folder_name, "") + "/icon.png")  
+    app.iconphoto(True, img)
 app.title(texts["title"])
 app.resizable(False, False)
 
