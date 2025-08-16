@@ -106,11 +106,11 @@ def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
 
     ffmpeg_args = {
         "cpu": {
-            "pass1": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-x265-params", "pass=1", "-an", "-f", "mp4", "NUL"],
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-x265-params", "pass=2", "-c:a", "aac", "-b:a", "64k", result_filename]
+            "pass1": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-x265-params", "pass=1", "-an", "-f", "mp4", "NUL"],
+            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-x265-params", "pass=2", "-c:a", "aac", "-b:a", "64k", result_filename]
         },
         "gpu": {
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", encoding_hw, "-b:v", f"{bitrate}k", "-filter:v", "fps=30,scale=1280:720", "-c:a", "aac", "-b:a", "64k", result_filename],
+            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", encoding_hw, "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-c:a", "aac", "-b:a", "64k", result_filename],
         }
     }
 
