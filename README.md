@@ -38,3 +38,5 @@ On Linux you need tk installed to run this script
 ```
 sudo pacman -Sy --needed tk
 ```
+
+Linxu builds work fine but without HW acceleration, only Software encoding currently.
