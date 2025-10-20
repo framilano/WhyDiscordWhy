@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Why Discord Why
+Name=Why Discord, why?
 Comment=A video compressor that creates video clips compatible with Discord non-nitro plan
 Exec=~/Documents/GitHub/WhyDiscordWhy/dist/whydiscordwhy/whydiscordwhy
 Icon=~/Documents/GitHub/WhyDiscordWhy/dist/whydiscordwhy/icon.png
