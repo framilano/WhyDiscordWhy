@@ -28,7 +28,7 @@ class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
 #Map of texts
 texts = {
     "title": "Why Discord, why?",
-    "select_input": "Select clip to compress\n(or drop it over this box)",
+    "select_input": "Select clip to compress\n(or drop it over this program)",
     "first_step_encoding": "Generating video info 🕒",
     "second_step_encoding": "Encoding compressed video 🎞️",
     "encoding_completed": "Encoding completed 💯",
@@ -40,9 +40,15 @@ texts = {
 
 #APP code starts here
 
+# Load theme
 customtkinter.set_appearance_mode("system")  # Modes: system (default), light, dark
-customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/" + config["theme_file_name"])  # Themes: blue (default), dark-blue, green
+match config["encoding_choice"]:
+    case 1: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/cpu-theme.json")
+    case 2: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/amd-theme.json")
+    case 3: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/nvidia-theme.json")
+    case 4: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/intel-theme.json")
 
+# Load app and icon
 app = CTk()
 if name == 'nt': app.iconbitmap(path.dirname(__file__).replace(internal_folder_name, "") + "\\icon.ico")
 else:
@@ -50,9 +56,6 @@ else:
     app.iconphoto(True, img)
 app.title(texts["title"])
 app.resizable(False, False)
-
-
-MAX_SIZE_MB = config["target_size_mb"]
 
 red = "#DC143C"
 yellow = "#FCDC94"
@@ -86,13 +89,12 @@ def compute_bitrate(filename):
     try: seconds = ceil(frames / fps) 
     except (ZeroDivisionError): return None
 
-    #target_size = MAX_SIZE_MB * 0.9 if encoding_hw == "cpu" else MAX_SIZE_MB * 0.75
-    target_size = int(MAX_SIZE_MB) * 0.9
+    target_size = int(config["target_size_mb"]) * 0.9
 
-    print("MAXSIZEMB: ", MAX_SIZE_MB)
+    print("MAXSIZEMB: ", config["target_size_mb"])
     print("SECONDS: ", seconds)
     # Computing bitrate
-    return floor(target_size * 8192 / seconds) - int(config["target_audio_bitrate"])
+    return floor(target_size * 8388.608 / seconds) - int(config["target_audio_bitrate"])
 
 def ffmpeg_routine(filename, video_bitrate, filepath):
     choice_map = {1: "cpu", 2: "amd", 3: "nvidia", 4: "intel"}
@@ -105,17 +107,12 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     pass1_string = ""
     pass2_string = ""
     result_filename = ""
-    actual_target_video_codec = ""
     
-    if (encoding_choice == user_radio_choice):
-        actual_choice = ffmpeg_map[choice_map[encoding_choice]]
-        actual_target_video_codec = config["target_video_codec"]
-        result_filename = filename.replace(f".{file_format}", f"-{actual_target_video_codec}-compressed.{file_format}")
-    else:
-        actual_choice = ffmpeg_map[choice_map[user_radio_choice]]
-        actual_target_video_codec = actual_choice["default_video_codec"]
-
-        result_filename = filename.replace(f".{file_format}", f"-{actual_target_video_codec}-compressed.{file_format}")
+    if (encoding_choice == user_radio_choice): actual_choice = ffmpeg_map[choice_map[encoding_choice]]
+    else: actual_choice = ffmpeg_map[choice_map[user_radio_choice]]
+   
+    target_video_codec = actual_choice["default_video_codec"]
+    result_filename = filename.replace(f".{file_format}", f"-{target_video_codec}-compressed.{file_format}")
 
     print("RESULT_FILENAME=", result_filename)
 
@@ -125,7 +122,7 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     pass1_string = ffmpeg_map[choice_map[user_radio_choice]]["pass1"] \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
         .replace("$INPUT", filename) \
-        .replace("$VIDEO_CODEC", actual_target_video_codec) \
+        .replace("$VIDEO_CODEC", target_video_codec) \
         .replace("$VIDEO_BITRATE", str(video_bitrate)) \
         .replace("$FPS", config["target_fps"]) \
         .replace("$RESOLUTION", config["target_resolution"]) \
@@ -137,7 +134,7 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     pass2_string = ffmpeg_map[choice_map[user_radio_choice]]["pass2"] \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
         .replace("$INPUT", filename) \
-        .replace("$VIDEO_CODEC", actual_target_video_codec) \
+        .replace("$VIDEO_CODEC", target_video_codec) \
         .replace("$VIDEO_BITRATE", str(video_bitrate)) \
         .replace("$FPS", config["target_fps"]) \
         .replace("$RESOLUTION", config["target_resolution"]) \
@@ -152,7 +149,6 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
 
     try:
         if (user_radio_choice == 1):
-            print("HIIIIII")
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
             if name == 'nt': check_call(pass1_string.split(" "), cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
@@ -218,7 +214,7 @@ def on_close():
 
     # Manually closing ffmpeg process...
     for proc in process_iter():
-        if proc.name() == "ffmpeg.exe":
+        if proc.name() == "ffmpeg.exe" or proc.name() =="ffmpeg":
             proc.kill()
             break
 
@@ -240,8 +236,9 @@ warninglabel = customtkinter.CTkLabel(master=app, text=texts["description"], fon
 warninglabel.grid(row=2, column=0, padx=20, pady=20, columnspan=4)
 
 selectfilebutton = customtkinter.CTkButton(master=app, text=texts["select_input"], command=lambda: select_file_to_compress(None), font=('Helvetica bold', 18))
-selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
+selectfilebutton.grid(row=3, column=0, padx=20, pady=20, columnspan=4)
 
+# Makes the whole program drag-n-droppable
 app.drop_target_register(DND_ALL)
 app.dnd_bind("<<Drop>>", get_dnd_path)
 
