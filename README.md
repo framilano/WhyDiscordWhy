@@ -12,24 +12,32 @@
 ## How to use
 https://github.com/user-attachments/assets/043ffb47-97ac-41b8-a21e-4ad11fa2cc59
 
+*You can even Drag-n-Drop files directly on top of the program to start the compression*
+
+**Linux build only supports AMD VAAPI for HW Acceleration and CPU encoding currently, Windows works with all profiles**
+
 ## Config
 You can define different encoders or targets size editing `config.json`:
 ```json
 {
-    "target_size_mb": 10,
-    "encoding_hw": 1,
-    "hw_ffmpeg_codec": "libx265",
-    "theme_file_name": "theme.json"
+    "encoding_choice": 2,
+    "target_size_mb": "10",
+    "target_resolution": "1280:720",
+    "target_audio_bitrate": "32",
+    "target_audio_codec": "libopus",
+    "target_fps": "30",
 }
 ```
+* `encoding_choice`, forces CPU software encoding, `2` uses AMD HW encoding, `3` is for NVIDIA and `4` is for Intel
 * `target_size_mb`, changes target compressed file size, default is 10MB
-* `encoding_hw`, `1` forces CPU software encoding, `2` uses AMD HW encoding, `3` is for NVIDIA and `4` is for Intel
-* `hw_ffmpeg_codec`, by default the selected codec is HEVC, but can you choose AV1 or H264 too (for AV1 with AMD just use `av1_amf`). Check ffmpeg docs to select the best codec for your system
-* `theme_file_name`, you can select other theme files for this program, check the Themes section
+* `target_resolution`, changes output file resolution
+* `target_audio_bitrate`, changes output file audio bitrate, default is 32
+* `target_audio_codec`, changes output file audio codec, default is libopus
+* `target_fps`, changes output file frame rate
 
 
 ## Themes
-You can edit every single aspect of the GUI color palette editing `theme.json` (or creating new files and selecting them using the config entry `theme_file_name`).
+You can edit every single aspect of the GUI color palette editing per profile. You can edit them modifying all the `profile-theme.json` files near the executable.
 
 More info regarding theme editing are available [here](https://github.com/TomSchimansky/CustomTkinter/wiki/Themes)
 
@@ -38,5 +46,3 @@ On Linux you need tk installed to run this script
 ```
 sudo pacman -Sy --needed tk
 ```
-
-Linxu builds work fine but without HW acceleration, only Software encoding currently.
