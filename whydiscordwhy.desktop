@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Why Discord Why
+Comment=A split-screen game launcher for Linux/SteamOS
+Exec=~/Documents/GitHub/WhyDiscordWhy/dist/whydiscordwhy/whydiscordwhy
+Icon=~/Documents/GitHub/WhyDiscordWhy/dist/whydiscordwhy/icon.png
+Terminal=false
+Categories=Utilities;
+StartupWMClass=whydiscordwhy;
