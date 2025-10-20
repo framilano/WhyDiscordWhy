@@ -18,6 +18,7 @@ internal_folder_name = ""
 if name == 'nt': internal_folder_name = "\\_internal"
 else: internal_folder_name = "/_internal"
 config = load(open(path.dirname(__file__).replace(internal_folder_name, "") + "/config.json", "r"))
+ffmpeg_map = config["ffmpeg_mapping"]["nt"] if (name == "nt") else config["ffmpeg_mapping"]["nx"]
 #Constructor for customtkinter that works with tkinterdnd2
 class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
     def __init__(self, *args, **kwargs):
@@ -59,7 +60,7 @@ orange = "#FFBE98"
 blue = "#1E90FF"
 
 # Defines which radio button is currently selected
-radio_encoder_var = customtkinter.IntVar(value=config["encoding_hw"])
+radio_encoder_var = customtkinter.IntVar(value=config["encoding_choice"])
 
 def get_dnd_path(event):
     dropped_file = event.data.replace("{","").replace("}", "")
@@ -73,7 +74,7 @@ def change_buttons_status(status):
     radiobutton_3.configure(state=status)
     radiobutton_4.configure(state=status)
 
-def compute_bitrate(filename, encoding_hw):
+def compute_bitrate(filename):
     video = VideoCapture(filename)
     
     # count the number of frames 
@@ -85,50 +86,80 @@ def compute_bitrate(filename, encoding_hw):
     except (ZeroDivisionError): return None
 
     #target_size = MAX_SIZE_MB * 0.9 if encoding_hw == "cpu" else MAX_SIZE_MB * 0.75
-    target_size = MAX_SIZE_MB * 0.9
+    target_size = int(MAX_SIZE_MB) * 0.9
 
     print("MAXSIZEMB: ", MAX_SIZE_MB)
     print("SECONDS: ", seconds)
     # Computing bitrate
-    return floor(target_size * 8388.608 / seconds) - 64
+    return floor(target_size * 8192 / seconds) - int(config["target_audio_bitrate"])
 
-def get_selected_encoding_hw():
-    if (radio_encoder_var.get() == config["encoding_hw"]): return config["hw_ffmpeg_codec"]
-    if radio_encoder_var.get() == 1: return "cpu"
-    if radio_encoder_var.get() == 2: return "hevc_amf"
-    if radio_encoder_var.get() == 3: return "hevc_nvenc"
-    if radio_encoder_var.get() == 4: return "hevc_qsv"
-
-def ffmpeg_routine(filename, bitrate, filepath, encoding_hw):
-    file_format = filename.split('.')[-1]
+def ffmpeg_routine(filename, video_bitrate, filepath):
+    choice_map = {1: "cpu", 2: "amd", 3: "nvidia", 4: "intel"}
+    encoding_choice = config["encoding_choice"]
+    user_radio_choice = radio_encoder_var.get()
     ffmpeg_path = "ffmpeg"
-    result_filename = filename.replace(f".{file_format}", f"-{encoding_hw}-compressed.{file_format}")
+    file_format = filename.split('.')[-1]
 
-    ffmpeg_args = {
-        "cpu": {
-            "pass1": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-x265-params", "pass=1", "-an", "-f", "mp4", "NUL"],
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", "libx265", "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-x265-params", "pass=2", "-c:a", "aac", "-b:a", "64k", result_filename]
-        },
-        "gpu": {
-            "pass2": [ffmpeg_path, "-y", "-i", filename, "-c:v", encoding_hw, "-b:v", f"{bitrate}k", "-filter:v", f"fps=30,scale={config["target_resolution"]}", "-c:a", "aac", "-b:a", "64k", result_filename],
-        }
-    }
+
+    pass1_string = ""
+    pass2_string = ""
+    result_filename = ""
+    actual_target_video_codec = ""
+    
+    if (encoding_choice == user_radio_choice):
+        actual_choice = ffmpeg_map[choice_map[encoding_choice]]
+        actual_target_video_codec = config["target_video_codec"]
+        result_filename = filename.replace(f".{file_format}", f"-{actual_target_video_codec}-compressed.{file_format}")
+    else:
+        actual_choice = ffmpeg_map[choice_map[user_radio_choice]]
+        actual_target_video_codec = actual_choice["default_video_codec"]
+
+        result_filename = filename.replace(f".{file_format}", f"-{actual_target_video_codec}-compressed.{file_format}")
+
+    print("RESULT_FILENAME=", result_filename)
+
+    pass1_string = actual_choice["pass1"]
+    pass2_string = actual_choice["pass2"]
+    
+    pass1_string = ffmpeg_map[choice_map[user_radio_choice]]["pass1"] \
+        .replace("$FFMPEG_PATH", ffmpeg_path) \
+        .replace("$INPUT", filename) \
+        .replace("$VIDEO_CODEC", actual_target_video_codec) \
+        .replace("$VIDEO_BITRATE", str(video_bitrate)) \
+        .replace("$FPS", config["target_fps"]) \
+        .replace("$RESOLUTION", config["target_resolution"]) \
+        .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
+        .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
+        .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
+        .replace("$OUTPUT", result_filename)
+    
+    pass2_string = ffmpeg_map[choice_map[user_radio_choice]]["pass2"] \
+        .replace("$FFMPEG_PATH", ffmpeg_path) \
+        .replace("$INPUT", filename) \
+        .replace("$VIDEO_CODEC", actual_target_video_codec) \
+        .replace("$VIDEO_BITRATE", str(video_bitrate)) \
+        .replace("$FPS", config["target_fps"]) \
+        .replace("$RESOLUTION", config["target_resolution"]) \
+        .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
+        .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
+        .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
+        .replace("$OUTPUT", result_filename)
+    
+    print("PASS1_STRING=", pass1_string)
+    print("PASS2_STRING=", pass2_string)
 
 
     try:
-        if (encoding_hw == "cpu"):
+        if (user_radio_choice == 1):
+            print("HIIIIII")
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            if name == 'nt': check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-            else: check_call(ffmpeg_args["cpu"]["pass1"], cwd=filepath, stderr=STDOUT)
-            progresslabel.configure(text=texts["second_step_encoding"])
-            progresslabel.configure(text_color=orange)
-            check_call(ffmpeg_args["cpu"]["pass2"], cwd=filepath, stderr=STDOUT)
-        else:
-            progresslabel.configure(text=texts["second_step_encoding"])
-            progresslabel.configure(text_color=orange)
-            if name == 'nt': check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-            else: check_call(ffmpeg_args["gpu"]["pass2"], cwd=filepath, stderr=STDOUT)
+            if name == 'nt': check_call(pass1_string.split(" "), cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            else: check_call(pass1_string.split(" "), cwd=filepath, stderr=STDOUT)
+        progresslabel.configure(text=texts["second_step_encoding"])
+        progresslabel.configure(text_color=orange)
+        if name == 'nt': check_call(pass2_string.split(" "), cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+        else: check_call(pass2_string.split(" "), cwd=filepath, stderr=STDOUT)
         
         progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)
@@ -165,17 +196,15 @@ def select_file_to_compress(fullpath):
     print(fullpath)
     folderpath = "/".join(fullpath.split("/")[0:-1])
     print(folderpath)
-    encoding_hw = get_selected_encoding_hw()
-    bitrate = compute_bitrate(fullpath, encoding_hw)
+    bitrate = compute_bitrate(fullpath)
     print("BITRATE: ", bitrate)
-    print("ENCODING_HW: ", encoding_hw)
 
     #Disabling select button after selecting a file
     change_buttons_status("disabled")
 
     if (bitrate):
         selectfilebutton.configure(text = fullpath.split("/")[-1])
-        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(fullpath, bitrate, folderpath, encoding_hw, ), daemon=True)
+        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(fullpath, bitrate, folderpath, ), daemon=True)
         ffmpeg_thread.start()
     else:
         change_buttons_status("normal")

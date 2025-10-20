@@ -3,3 +3,4 @@ tkinterdnd2==0.4.3
 opencv-python==4.11.0.86
 psutil==7.0.0
 pyinstaller==6.16.0
+tk==0.1.0
