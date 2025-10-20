@@ -51,6 +51,7 @@ else:
 app.title(texts["title"])
 app.resizable(False, False)
 
+
 MAX_SIZE_MB = config["target_size_mb"]
 
 red = "#DC143C"
@@ -239,9 +240,10 @@ warninglabel = customtkinter.CTkLabel(master=app, text=texts["description"], fon
 warninglabel.grid(row=2, column=0, padx=20, pady=20, columnspan=4)
 
 selectfilebutton = customtkinter.CTkButton(master=app, text=texts["select_input"], command=lambda: select_file_to_compress(None), font=('Helvetica bold', 18))
-selectfilebutton.drop_target_register(DND_ALL)
-selectfilebutton.dnd_bind("<<Drop>>", get_dnd_path)
 selectfilebutton.grid(row=3, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
+
+app.drop_target_register(DND_ALL)
+app.dnd_bind("<<Drop>>", get_dnd_path)
 
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
 progresslabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
