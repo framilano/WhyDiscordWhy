@@ -100,13 +100,8 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     choice_map = {1: "cpu", 2: "amd", 3: "nvidia", 4: "intel"}
     encoding_choice = config["encoding_choice"]
     user_radio_choice = radio_encoder_var.get()
-    ffmpeg_path = "ffmpeg"
+    ffmpeg_path = (path.abspath(path.join(path.dirname(__file__), 'ffmpeg\\ffmpeg.exe')) if name == "nt" else "ffmpeg")
     file_format = filename.split('.')[-1]
-
-
-    pass1_string = ""
-    pass2_string = ""
-    result_filename = ""
     
     if (encoding_choice == user_radio_choice): actual_choice = ffmpeg_map[choice_map[encoding_choice]]
     else: actual_choice = ffmpeg_map[choice_map[user_radio_choice]]
@@ -114,12 +109,12 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     target_video_codec = actual_choice["default_video_codec"]
     result_filename = filename.replace(f".{file_format}", f"-{target_video_codec}-compressed.{file_format}")
 
-    print("RESULT_FILENAME=", result_filename)
+    print("RESULT_FILENAME:", result_filename)
 
     pass1_string = actual_choice["pass1"]
     pass2_string = actual_choice["pass2"]
     
-    pass1_string = ffmpeg_map[choice_map[user_radio_choice]]["pass1"] \
+    pass1_string = pass1_string \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
         .replace("$INPUT", filename) \
         .replace("$VIDEO_CODEC", target_video_codec) \
@@ -131,7 +126,7 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
         .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
         .replace("$OUTPUT", result_filename)
     
-    pass2_string = ffmpeg_map[choice_map[user_radio_choice]]["pass2"] \
+    pass2_string = pass2_string \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
         .replace("$INPUT", filename) \
         .replace("$VIDEO_CODEC", target_video_codec) \
@@ -143,8 +138,8 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
         .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
         .replace("$OUTPUT", result_filename)
     
-    print("PASS1_STRING=", pass1_string)
-    print("PASS2_STRING=", pass2_string)
+    print("PASS1_STRING:", pass1_string)
+    print("PASS2_STRING:", pass2_string)
 
 
     try:
