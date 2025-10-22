@@ -116,7 +116,7 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     
     pass1_string = pass1_string \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
-        .replace("$INPUT", filename) \
+        .replace("$INPUT", filename.replace(' ', '\x00')) \
         .replace("$VIDEO_CODEC", target_video_codec) \
         .replace("$VIDEO_BITRATE", str(video_bitrate)) \
         .replace("$FPS", config["target_fps"]) \
@@ -124,11 +124,11 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
         .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
         .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
         .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
-        .replace("$OUTPUT", result_filename)
+        .replace("$OUTPUT", result_filename.replace(' ', '\x00'))
     
     pass2_string = pass2_string \
         .replace("$FFMPEG_PATH", ffmpeg_path) \
-        .replace("$INPUT", filename) \
+        .replace("$INPUT", filename.replace(' ', '\x00')) \
         .replace("$VIDEO_CODEC", target_video_codec) \
         .replace("$VIDEO_BITRATE", str(video_bitrate)) \
         .replace("$FPS", config["target_fps"]) \
@@ -136,22 +136,28 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
         .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
         .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
         .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
-        .replace("$OUTPUT", result_filename)
+        .replace("$OUTPUT", result_filename.replace(' ', '\x00'))
     
-    print("PASS1_STRING:", pass1_string)
-    print("PASS2_STRING:", pass2_string)
+    #If path contains spaces, we replace them with NUL characters, so can now split safely to obtain 'check_chall' input list
+    #check_call needs these spaces in the list though, so we just replace them back to get this:
+    #["ffmpeg", "-i", "my file with spaces"] 'check call' will automatically put quotes around one single element in the list if 
+    #it contains any space
+    pass1_command = [s.replace('\x00', ' ') for s in pass1_string.split(" ")]
+    pass2_command = [s.replace('\x00', ' ') for s in pass2_string.split(" ")]
 
+    print("PASS1_COMMAND:", pass1_command)
+    print("PASS2_COMMAND:", pass2_command)
 
     try:
         if (user_radio_choice == 1):
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            if name == 'nt': check_call(pass1_string.split(" "), cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-            else: check_call(pass1_string.split(" "), cwd=filepath, stderr=STDOUT)
+            if name == 'nt': check_call(pass1_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+            else: check_call(pass1_command, cwd=filepath, stderr=STDOUT)
         progresslabel.configure(text=texts["second_step_encoding"])
         progresslabel.configure(text_color=orange)
-        if name == 'nt': check_call(pass2_string.split(" "), cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-        else: check_call(pass2_string.split(" "), cwd=filepath, stderr=STDOUT)
+        if name == 'nt': check_call(pass2_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
+        else: check_call(pass2_command, cwd=filepath, stderr=STDOUT)
         
         progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)

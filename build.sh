@@ -6,6 +6,7 @@ cp cpu-theme.json dist/whydiscordwhy/cpu-theme.json
 cp amd-theme.json dist/whydiscordwhy/amd-theme.json
 cp nvidia-theme.json dist/whydiscordwhy/nvidia-theme.json
 cp intel-theme.json dist/whydiscordwhy/intel-theme.json
+cp whydiscordwhy.desktop dist/whydiscordwhy/whydiscordwhy.desktop
 
 cp config.json dist/whydiscordwhy/config.json
 
