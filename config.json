@@ -1,7 +1,7 @@
 {
-    "encoding_choice": 1,
+    "encoding_choice": 2,
     "target_size_mb": "10",
-    "target_resolution": "1280:720",
+    "target_resolution": "1366:768",
     "target_audio_bitrate": "32",
     "target_audio_codec": "libopus",
     "target_size_efficiency": "1.0",
@@ -10,35 +10,35 @@
         "nt": {
             "cpu": {
                 "default_video_codec": "libsvtav1",
-                "pass1": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null NUL",
-                "pass2": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null NUL",
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "amd": {
                 "default_video_codec": "av1_amf",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "nvidia": {
                 "default_video_codec": "av1_nvenc",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "intel": {
                 "default_video_codec": "av1_qsv",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             }
         },
         "nx": {
             "cpu": {
                 "default_video_codec": "libsvtav1",
-                "pass1": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null /dev/null",
-                "pass2": "$FFMPEG_PATH -y -loglevel quiet -stats -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null /dev/null",
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "amd": {
                 "default_video_codec": "av1_vaapi",
                 "pass1": "",
-                "pass2":"$FFMPEG_PATH -y -loglevel quiet -stats -init_hw_device vaapi=gpu:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device gpu -i $INPUT -filter_hw_device gpu -vf format=nv12|vaapi,hwupload,scale_vaapi=$RESOLUTION,fps=$FPS -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2":"$FFMPEG_PATH -y -init_hw_device vaapi=gpu:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device gpu -i $INPUT -filter_hw_device gpu -vf format=nv12|vaapi,hwupload,scale_vaapi=$RESOLUTION,fps=$FPS -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             }
         }
     }
