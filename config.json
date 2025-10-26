@@ -16,17 +16,17 @@
             "amd": {
                 "default_video_codec": "av1_amf",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "nvidia": {
                 "default_video_codec": "av1_nvenc",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "intel": {
                 "default_video_codec": "av1_qsv",
                 "pass1": "",
-                "pass2": "$FFMPEG_PATH -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             }
         },
         "nx": {
