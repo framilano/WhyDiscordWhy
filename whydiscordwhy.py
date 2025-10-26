@@ -89,7 +89,7 @@ def compute_bitrate(filename):
     try: seconds = ceil(frames / fps) 
     except (ZeroDivisionError): return None
 
-    target_size = int(config["target_size_mb"]) * 0.9
+    target_size = int(config["target_size_mb"]) * float(config["target_size_efficiency"])
 
     print("MAXSIZEMB: ", config["target_size_mb"])
     print("SECONDS: ", seconds)
@@ -179,6 +179,7 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     if path.isfile(filepath + "/x265_2pass.log.temp"): remove(filepath + "/x265_2pass.log.temp")
     if path.isfile(filepath + "/x265_2pass.log.cutree.temp"): remove(filepath + "/x265_2pass.log.cutree.temp")
     if path.isfile(filepath + "/ffmpeg2pass-0.log"): remove(filepath + "/ffmpeg2pass-0.log")
+    if path.isfile(filepath + "/ffmpeg2pass-0.log.mbtree"): remove(filepath + "/ffmpeg2pass-0.log.mbtree")
 
     if name == 'nt': startfile(filepath=filepath)
     else: check_call(["xdg-open", filepath])

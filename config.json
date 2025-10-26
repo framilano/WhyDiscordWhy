@@ -1,16 +1,17 @@
 {
     "encoding_choice": 2,
     "target_size_mb": "10",
-    "target_resolution": "1280:720",
+    "target_resolution": "1366:768",
     "target_audio_bitrate": "32",
     "target_audio_codec": "libopus",
+    "target_size_efficiency": "1.0",
     "target_fps": "30",
     "ffmpeg_mapping": {
         "nt": {
             "cpu": {
-                "default_video_codec": "libx265",
-                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -x265-params pass=1 -an -f mp4 NUL",
-                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -x265-params pass=2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "default_video_codec": "libsvtav1",
+                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null NUL",
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "amd": {
                 "default_video_codec": "av1_amf",
@@ -30,9 +31,9 @@
         },
         "nx": {
             "cpu": {
-                "default_video_codec": "libx265",
-                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -x265-params pass=1 -an -f mp4 /dev/null",
-                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -x265-params pass=2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "default_video_codec": "libsvtav1",
+                "pass1": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 1 -an -f null /dev/null",
+                "pass2": "$FFMPEG_PATH -y -i $INPUT -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -filter:v fps=$FPS,scale=$RESOLUTION -pass 2 -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             },
             "amd": {
                 "default_video_codec": "av1_vaapi",
