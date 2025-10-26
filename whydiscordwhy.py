@@ -3,15 +3,16 @@ import customtkinter
 from tkinterdnd2 import TkinterDnD, DND_ALL
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, check_call
+from subprocess import CalledProcessError, STDOUT, PIPE, check_call, run, Popen
 from os import path, remove, name
 if name == 'nt':
-    from subprocess import CREATE_NO_WINDOW
     from os import startfile
+from time import sleep
 from threading import Thread
 from psutil import process_iter
 from json import load
 from sys import argv
+from re import search
 
 #Loading config file
 internal_folder_name = ""
@@ -30,7 +31,7 @@ texts = {
     "title": "Why Discord, why?",
     "select_input": "Select clip to compress\n(or drop it over this program)",
     "first_step_encoding": "Generating video info 🕒",
-    "second_step_encoding": "Encoding compressed video 🎞️",
+    "second_step_encoding": "Encoding compressed video 🎥",
     "encoding_completed": "Encoding completed 💯",
     "encoding_error": "Error during video encoding ❌",
     "ffmpeg_not_found": "Couldn't find ffmpeg ❌",
@@ -63,6 +64,7 @@ green = "#008000"
 orange = "#FFBE98"
 blue = "#1E90FF"
 
+
 # Defines which radio button is currently selected
 radio_encoder_var = customtkinter.IntVar(value=config["encoding_choice"])
 
@@ -86,17 +88,19 @@ def compute_bitrate(filename):
     fps = video.get(CAP_PROP_FPS) 
     
     # calculate duration of the video 
-    try: seconds = ceil(frames / fps) 
+    try: duration_seconds = ceil(frames / fps) 
     except (ZeroDivisionError): return None
 
     target_size = int(config["target_size_mb"]) * float(config["target_size_efficiency"])
-
-    print("MAXSIZEMB: ", config["target_size_mb"])
-    print("SECONDS: ", seconds)
+    bitrate = floor(target_size * 8388.608 / duration_seconds) - int(config["target_audio_bitrate"])
+    print("MAXSIZEMB:", config["target_size_mb"])
+    print("SECONDS:", duration_seconds)
+    print("TARGET_BITRATE:", bitrate)
+   
     # Computing bitrate
-    return floor(target_size * 8388.608 / seconds) - int(config["target_audio_bitrate"])
+    return (duration_seconds, bitrate)
 
-def ffmpeg_routine(filename, video_bitrate, filepath):
+def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
     choice_map = {1: "cpu", 2: "amd", 3: "nvidia", 4: "intel"}
     encoding_choice = config["encoding_choice"]
     user_radio_choice = radio_encoder_var.get()
@@ -149,16 +153,20 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     print("PASS2_COMMAND:", pass2_command)
 
     try:
+        result = ""
         if (user_radio_choice == 1):
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            if name == 'nt': check_call(pass1_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-            else: check_call(pass1_command, cwd=filepath, stderr=STDOUT)
+            if name == 'nt': process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+            else:process = Popen(pass1_command, cwd=filepath, stderr=STDOUT)
+            compute_completion_percentage(process, duration_seconds, progresslabel, texts["first_step_encoding"])
         progresslabel.configure(text=texts["second_step_encoding"])
         progresslabel.configure(text_color=orange)
-        if name == 'nt': check_call(pass2_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-        else: check_call(pass2_command, cwd=filepath, stderr=STDOUT)
-        
+        if name == 'nt': process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+        else: process = Popen(pass2_command, cwd=filepath, stderr=STDOUT)
+        compute_completion_percentage(process, duration_seconds, progresslabel, texts["second_step_encoding"])
+
+
         progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)
     except(CalledProcessError):
@@ -184,6 +192,18 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     if name == 'nt': startfile(filepath=filepath)
     else: check_call(["xdg-open", filepath])
 
+def compute_completion_percentage(process, duration_seconds, progresslabel, original_text):
+    pattern = r"time=(\d{2}):(\d{2}):(\d{2}\.\d{2})"
+    while process.poll() is None:
+        match = search(pattern, process.stdout.read(200).decode("utf-8").strip())
+        if (match):
+            hours, minutes, seconds = match.groups()
+            current_seconds = int(minutes) * 60 + floor(float(seconds))
+            integer_percentage = floor(current_seconds * 100 / duration_seconds)
+            progresslabel.configure(text=original_text + " " + f"{integer_percentage:02}%")
+        sleep (0.1)
+
+
 def select_file_to_compress(fullpath):
     if (fullpath is None): fullpath = filedialog.askopenfilename()
     if fullpath == () or fullpath == '':
@@ -195,15 +215,14 @@ def select_file_to_compress(fullpath):
     print(fullpath)
     folderpath = "/".join(fullpath.split("/")[0:-1])
     print(folderpath)
-    bitrate = compute_bitrate(fullpath)
-    print("BITRATE: ", bitrate)
+    (duration_seconds, bitrate) = compute_bitrate(fullpath)
 
     #Disabling select button after selecting a file
     change_buttons_status("disabled")
 
     if (bitrate):
         selectfilebutton.configure(text = fullpath.split("/")[-1])
-        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(fullpath, bitrate, folderpath, ), daemon=True)
+        ffmpeg_thread = Thread(target=ffmpeg_routine, args=(fullpath, bitrate, duration_seconds, folderpath, ), daemon=True)
         ffmpeg_thread.start()
     else:
         change_buttons_status("normal")
