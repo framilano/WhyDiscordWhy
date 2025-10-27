@@ -149,16 +149,23 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
     print("PASS2_COMMAND:", pass2_command)
 
     try:
+        start_percentage = 0
+        end_percentage = 100
         if (user_radio_choice == 1):
+            end_percentage = 50
             progresslabel.configure(text=texts["first_step_encoding"])
             progresslabel.configure(text_color=yellow)
-            if name == 'nt': check_call(pass1_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-            else: check_call(pass1_command, cwd=filepath, stderr=STDOUT)
+            if name == 'nt': process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+            else: process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+            compute_completion_percentage(process, duration_seconds, progresslabel, texts["first_step_encoding"], start_percentage, end_percentage)
+            start_percentage = 50
         progresslabel.configure(text=texts["second_step_encoding"])
         progresslabel.configure(text_color=orange)
-        if name == 'nt': check_call(pass2_command, cwd=filepath, stderr=STDOUT, creationflags=CREATE_NO_WINDOW)
-        else: check_call(pass2_command, cwd=filepath, stderr=STDOUT)
-        
+        if name == 'nt': process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+        else: process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+        compute_completion_percentage(process, duration_seconds, progresslabel, texts["second_step_encoding"], start_percentage, end_percentage)
+
+
         progresslabel.configure(text=texts["encoding_completed"])
         progresslabel.configure(text_color=green)
     except(CalledProcessError):
@@ -183,6 +190,18 @@ def ffmpeg_routine(filename, video_bitrate, filepath):
 
     if name == 'nt': startfile(filepath=filepath)
     else: check_call(["xdg-open", filepath])
+
+def compute_completion_percentage(process, duration_seconds, progresslabel, original_text, start_percentage, end_percentage):
+    pattern = r"time=(\d{2}):(\d{2}):(\d{2}\.\d{2})"
+    while process.poll() is None:
+        match = search(pattern, process.stdout.read(200).decode("utf-8").strip())
+        if (match):
+            hours, minutes, seconds = match.groups()
+            current_seconds = int(minutes) * 60 + floor(float(seconds))
+            integer_percentage = floor(current_seconds * end_percentage / duration_seconds)
+            progresslabel.configure(text=original_text + " " + f"{start_percentage + integer_percentage:02}%")
+        sleep (0.1)
+
 
 def select_file_to_compress(fullpath):
     if (fullpath is None): fullpath = filedialog.askopenfilename()
