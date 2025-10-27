@@ -4,7 +4,7 @@
     "target_resolution": "1366:768",
     "target_audio_bitrate": "32",
     "target_audio_codec": "libopus",
-    "target_size_efficiency": "1.0",
+    "target_size_efficiency": "0.95",
     "target_fps": "30",
     "ffmpeg_mapping": {
         "nt": {

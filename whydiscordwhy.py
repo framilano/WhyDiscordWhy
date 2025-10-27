@@ -13,6 +13,7 @@ from psutil import process_iter
 from json import load
 from sys import argv
 from re import search
+from time import time
 
 #Loading config file
 internal_folder_name = ""
@@ -30,6 +31,7 @@ class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
 texts = {
     "title": "Why Discord, why?",
     "select_input": "Select clip to compress\n(or drop it over this program)",
+    "warm_up": "Warming ffmpeg engine ⚙️",
     "first_step_encoding": "Generating video info 🕒",
     "second_step_encoding": "Encoding compressed video 🎥",
     "encoding_completed": "Encoding completed 💯",
@@ -101,6 +103,7 @@ def compute_bitrate(filename):
     return (duration_seconds, bitrate)
 
 def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
+    progresslabel.configure(text=texts["warm_up"], text_color=yellow)
     choice_map = {1: "cpu", 2: "amd", 3: "nvidia", 4: "intel"}
     encoding_choice = config["encoding_choice"]
     user_radio_choice = radio_encoder_var.get()
@@ -152,35 +155,32 @@ def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
     print("PASS1_COMMAND:", pass1_command)
     print("PASS2_COMMAND:", pass2_command)
 
+    # Starting time
+    start_time = time()
+
     try:
         start_percentage = 0
         end_percentage = 100
         if (user_radio_choice == 1):
             end_percentage = 50
-            progresslabel.configure(text=texts["first_step_encoding"])
-            progresslabel.configure(text_color=yellow)
             if name == 'nt': process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
             else: process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
-            compute_completion_percentage(process, duration_seconds, progresslabel, texts["first_step_encoding"], start_percentage, end_percentage)
+            compute_completion_percentage(process, duration_seconds, progresslabel, texts["first_step_encoding"], yellow, start_percentage, end_percentage)
             start_percentage = 50
-        progresslabel.configure(text=texts["second_step_encoding"])
-        progresslabel.configure(text_color=orange)
         if name == 'nt': process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
         else: process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
-        compute_completion_percentage(process, duration_seconds, progresslabel, texts["second_step_encoding"], start_percentage, end_percentage)
+        compute_completion_percentage(process, duration_seconds, progresslabel, texts["second_step_encoding"], orange, start_percentage, end_percentage)
 
-
-        progresslabel.configure(text=texts["encoding_completed"])
-        progresslabel.configure(text_color=green)
+        progresslabel.configure(text=texts["encoding_completed"], text_color=green)
     except(CalledProcessError):
-        progresslabel.configure(text=texts["encoding_error"])
-        progresslabel.configure(text_color=red)
-
+        progresslabel.configure(text=texts["encoding_error"], text_color=red)
         if path.isfile(result_filename) and result_filename != filename: remove(result_filename)
     except(FileNotFoundError):
-        progresslabel.configure(text=texts["ffmpeg_not_found"])
-        progresslabel.configure(text_color=red)
+        progresslabel.configure(text=texts["ffmpeg_not_found"], text_color=red)
     
+    end_time = time()  # Record the end time
+    elapsed_time = end_time - start_time
+    print(f"Encoding took {elapsed_time:.2f} seconds to complete.")
     change_buttons_status("normal")
     selectfilebutton.configure(text = texts["select_input"])
 
@@ -195,7 +195,7 @@ def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
     if name == 'nt': startfile(filepath=filepath)
     else: check_call(["xdg-open", filepath])
 
-def compute_completion_percentage(process, duration_seconds, progresslabel, original_text, start_percentage, end_percentage):
+def compute_completion_percentage(process, duration_seconds, progresslabel, original_text, color, start_percentage, end_percentage):
     pattern = r"time=(\d{2}):(\d{2}):(\d{2}\.\d{2})"
     while process.poll() is None:
         match = search(pattern, process.stdout.read(200).decode("utf-8").strip())
@@ -203,16 +203,14 @@ def compute_completion_percentage(process, duration_seconds, progresslabel, orig
             hours, minutes, seconds = match.groups()
             current_seconds = int(minutes) * 60 + floor(float(seconds))
             integer_percentage = floor(current_seconds * end_percentage / duration_seconds)
-            progresslabel.configure(text=original_text + " " + f"{start_percentage + integer_percentage:02}%")
+            progresslabel.configure(text=original_text + " " + f"{start_percentage + integer_percentage:02}%", text_color=color)
         sleep (0.1)
-
 
 def select_file_to_compress(fullpath):
     if (fullpath is None): fullpath = filedialog.askopenfilename()
     if fullpath == () or fullpath == '':
-        change_buttons_status("normal")
-        progresslabel.configure(text = texts["file_not_found"])
-        progresslabel.configure(text_color="#C96868") 
+        change_buttons_status("normal"),
+        progresslabel.configure(text = texts["file_not_found"], text_color="#C96868")
         return
     
     print(fullpath)
@@ -229,8 +227,7 @@ def select_file_to_compress(fullpath):
         ffmpeg_thread.start()
     else:
         change_buttons_status("normal")
-        progresslabel.configure(text = texts["file_not_found"])
-        progresslabel.configure(text_color="#C96868")
+        progresslabel.configure(text = texts["file_not_found"], text_color="#C96868")
 
 def on_close():  
     print("Closing...")  
