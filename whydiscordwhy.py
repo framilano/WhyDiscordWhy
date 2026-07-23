@@ -3,7 +3,7 @@ import customtkinter
 from tkinterdnd2 import TkinterDnD, DND_ALL
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, PIPE, check_call, Popen
+from subprocess import CalledProcessError, STDOUT, PIPE, check_call, Popen, CREATE_NO_WINDOW
 from os import path, remove, name
 if name == 'nt':
     from os import startfile
@@ -170,11 +170,11 @@ def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
         end_percentage = 100
         if (user_radio_choice == 1):
             end_percentage = 50
-            if name == 'nt': process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+            if name == 'nt': process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE, creationflags=CREATE_NO_WINDOW)
             else: process = Popen(pass1_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
             compute_completion_percentage(process, duration_seconds, progresslabel, texts["first_step_encoding"], yellow, start_percentage, end_percentage)
             start_percentage = 50
-        if name == 'nt': process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
+        if name == 'nt': process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE, creationflags=CREATE_NO_WINDOW)
         else: process = Popen(pass2_command, cwd=filepath, stderr=STDOUT, stdout=PIPE)
         compute_completion_percentage(process, duration_seconds, progresslabel, texts["second_step_encoding"], orange, start_percentage, end_percentage)
 
