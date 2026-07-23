@@ -1,6 +1,6 @@
 {
     "encoding_choice": 2,
-    "target_size_mb": "10",
+    "target_size_mb": "260",
     "target_resolution": "1366:768",
     "target_audio_bitrate": "32",
     "target_audio_codec": "libopus",
@@ -38,7 +38,7 @@
             "amd": {
                 "default_video_codec": "av1_vaapi",
                 "pass1": "",
-                "pass2":"$FFMPEG_PATH -y -init_hw_device vaapi=gpu:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device gpu -i $INPUT -filter_hw_device gpu -vf format=nv12|vaapi,hwupload,scale_vaapi=$RESOLUTION,fps=$FPS -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
+                "pass2": "$FFMPEG_PATH -y -init_hw_device vaapi=gpu:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device gpu -i $INPUT -filter_hw_device gpu -vf format=nv12|vaapi,hwupload,scale_vaapi=$RESOLUTION,fps=$FPS -c:v $VIDEO_CODEC -b:v $VIDEO_BITRATEk -maxrate $VIDEO_BITRATEk -bufsize $DOUBLE_VID_BITRATEk -c:a $AUDIO_CODEC -b:a $AUDIO_BITRATEk $OUTPUT"
             }
         }
     }

@@ -3,14 +3,14 @@ import customtkinter
 from tkinterdnd2 import TkinterDnD, DND_ALL
 from math import floor, ceil
 from cv2 import CAP_PROP_FRAME_COUNT, CAP_PROP_FPS, VideoCapture
-from subprocess import CalledProcessError, STDOUT, PIPE, check_call, run, Popen
+from subprocess import CalledProcessError, STDOUT, PIPE, check_call, Popen
 from os import path, remove, name
 if name == 'nt':
     from os import startfile
 from time import sleep
 from threading import Thread
 from psutil import process_iter
-from json import load
+from json import load, dump
 from sys import argv
 from re import search
 from time import time
@@ -19,7 +19,8 @@ from time import time
 internal_folder_name = ""
 if name == 'nt': internal_folder_name = "\\_internal"
 else: internal_folder_name = "/_internal"
-config = load(open(path.dirname(__file__).replace(internal_folder_name, "") + "/config.json", "r"))
+base_path = path.dirname(__file__).replace(internal_folder_name, "")
+config = load(open(base_path + "/config.json", "r"))
 ffmpeg_map = config["ffmpeg_mapping"]["nt"] if (name == "nt") else config["ffmpeg_mapping"]["nx"]
 #Constructor for customtkinter that works with tkinterdnd2
 class CTk(customtkinter.CTk, TkinterDnD.DnDWrapper):
@@ -46,16 +47,16 @@ texts = {
 # Load theme
 customtkinter.set_appearance_mode("system")  # Modes: system (default), light, dark
 match config["encoding_choice"]:
-    case 1: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/cpu-theme.json")
-    case 2: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/amd-theme.json")
-    case 3: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/nvidia-theme.json")
-    case 4: customtkinter.set_default_color_theme(path.dirname(__file__).replace(internal_folder_name, "") + "/intel-theme.json")
+    case 1: customtkinter.set_default_color_theme(base_path + "/cpu-theme.json")
+    case 2: customtkinter.set_default_color_theme(base_path + "/amd-theme.json")
+    case 3: customtkinter.set_default_color_theme(base_path + "/nvidia-theme.json")
+    case 4: customtkinter.set_default_color_theme(base_path + "/intel-theme.json")
 
 # Load app and icon
 app = CTk()
-if name == 'nt': app.iconbitmap(path.dirname(__file__).replace(internal_folder_name, "") + "\\icon.ico")
+if name == 'nt': app.iconbitmap(base_path + "\\icon.ico")
 else:
-    img = PhotoImage(file=path.dirname(__file__).replace(internal_folder_name, "") + "/icon.png")  
+    img = PhotoImage(file=base_path + "/icon.png")  
     app.iconphoto(True, img)
 app.title(texts["title"])
 app.resizable(False, False)
@@ -70,6 +71,37 @@ blue = "#1E90FF"
 # Defines which radio button is currently selected
 radio_encoder_var = customtkinter.IntVar(value=config["encoding_choice"])
 
+target_size_var = customtkinter.DoubleVar(value=float(config["target_size_mb"]))
+
+config_path = base_path + "/config.json"
+encoder_radio_buttons = []
+
+def save_config():
+    with open(config_path, "w") as f:
+        dump(config, f, indent=4)
+
+def build_ffmpeg_command(template, ffmpeg_path, filename, target_video_codec, video_bitrate, result_filename):
+    return template \
+        .replace("$FFMPEG_PATH", ffmpeg_path) \
+        .replace("$INPUT", filename.replace(' ', '\x00')) \
+        .replace("$VIDEO_CODEC", target_video_codec) \
+        .replace("$VIDEO_BITRATE", str(video_bitrate)) \
+        .replace("$FPS", config["target_fps"]) \
+        .replace("$RESOLUTION", config["target_resolution"]) \
+        .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
+        .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
+        .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
+        .replace("$OUTPUT", result_filename.replace(' ', '\x00'))
+
+def update_target_size(value):
+    int_value = int(float(value))
+    target_size_value.configure(text=f"{int_value} MB")
+    config["target_size_mb"] = str(int_value)
+
+def on_encoder_change(*args):
+    config["encoding_choice"] = radio_encoder_var.get()
+    save_config()
+
 def get_dnd_path(event):
     dropped_file = event.data.replace("{","").replace("}", "")
     print(dropped_file)
@@ -77,10 +109,9 @@ def get_dnd_path(event):
 
 def change_buttons_status(status):
     selectfilebutton.configure(state=status)
-    radiobutton_1.configure(state=status)
-    radiobutton_2.configure(state=status)
-    radiobutton_3.configure(state=status)
-    radiobutton_4.configure(state=status)
+    for rb in encoder_radio_buttons:
+        rb.configure(state=status)
+    target_size_slider.configure(state=status)
 
 def compute_bitrate(filename):
     video = VideoCapture(filename)
@@ -118,32 +149,8 @@ def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
 
     print("RESULT_FILENAME:", result_filename)
 
-    pass1_string = actual_choice["pass1"]
-    pass2_string = actual_choice["pass2"]
-    
-    pass1_string = pass1_string \
-        .replace("$FFMPEG_PATH", ffmpeg_path) \
-        .replace("$INPUT", filename.replace(' ', '\x00')) \
-        .replace("$VIDEO_CODEC", target_video_codec) \
-        .replace("$VIDEO_BITRATE", str(video_bitrate)) \
-        .replace("$FPS", config["target_fps"]) \
-        .replace("$RESOLUTION", config["target_resolution"]) \
-        .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
-        .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
-        .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
-        .replace("$OUTPUT", result_filename.replace(' ', '\x00'))
-    
-    pass2_string = pass2_string \
-        .replace("$FFMPEG_PATH", ffmpeg_path) \
-        .replace("$INPUT", filename.replace(' ', '\x00')) \
-        .replace("$VIDEO_CODEC", target_video_codec) \
-        .replace("$VIDEO_BITRATE", str(video_bitrate)) \
-        .replace("$FPS", config["target_fps"]) \
-        .replace("$RESOLUTION", config["target_resolution"]) \
-        .replace("$AUDIO_CODEC", config["target_audio_codec"]) \
-        .replace("$AUDIO_BITRATE", config["target_audio_bitrate"]) \
-        .replace("$DOUBLE_VID_BITRATE", str(video_bitrate*2)) \
-        .replace("$OUTPUT", result_filename.replace(' ', '\x00'))
+    pass1_string = build_ffmpeg_command(actual_choice["pass1"], ffmpeg_path, filename, target_video_codec, video_bitrate, result_filename)
+    pass2_string = build_ffmpeg_command(actual_choice["pass2"], ffmpeg_path, filename, target_video_codec, video_bitrate, result_filename)
     
     #If path contains spaces, we replace them with NUL characters, so can now split safely to obtain 'check_chall' input list
     #check_call needs these spaces in the list though, so we just replace them back to get this:
@@ -185,12 +192,15 @@ def ffmpeg_routine(filename, video_bitrate, duration_seconds, filepath):
     selectfilebutton.configure(text = texts["select_input"])
 
     #Cleaning...
-    if path.isfile(filepath + "/x265_2pass.log"): remove(filepath + "/x265_2pass.log")
-    if path.isfile(filepath + "/x265_2pass.log.cutree"): remove(filepath + "/x265_2pass.log.cutree")
-    if path.isfile(filepath + "/x265_2pass.log.temp"): remove(filepath + "/x265_2pass.log.temp")
-    if path.isfile(filepath + "/x265_2pass.log.cutree.temp"): remove(filepath + "/x265_2pass.log.cutree.temp")
-    if path.isfile(filepath + "/ffmpeg2pass-0.log"): remove(filepath + "/ffmpeg2pass-0.log")
-    if path.isfile(filepath + "/ffmpeg2pass-0.log.mbtree"): remove(filepath + "/ffmpeg2pass-0.log.mbtree")
+    log_files = [
+        "x265_2pass.log", "x265_2pass.log.cutree",
+        "x265_2pass.log.temp", "x265_2pass.log.cutree.temp",
+        "ffmpeg2pass-0.log", "ffmpeg2pass-0.log.mbtree",
+    ]
+    for log_file in log_files:
+        log_path = path.join(filepath, log_file)
+        if path.isfile(log_path):
+            remove(log_path)
 
     if name == 'nt': startfile(filepath=filepath)
     else: check_call(["xdg-open", filepath])
@@ -209,7 +219,7 @@ def compute_completion_percentage(process, duration_seconds, progresslabel, orig
 def select_file_to_compress(fullpath):
     if (fullpath is None): fullpath = filedialog.askopenfilename()
     if fullpath == () or fullpath == '':
-        change_buttons_status("normal"),
+        change_buttons_status("normal")
         progresslabel.configure(text = texts["file_not_found"], text_color="#C96868")
         return
     
@@ -244,27 +254,45 @@ def on_close():
 title_label = customtkinter.CTkLabel(master=app, text=texts["title"], font=('Helvetica bold', 32))
 title_label.grid(row=0, column=0, padx=20, pady=20, columnspan=4)
 
-radiobutton_1 = customtkinter.CTkRadioButton(master=app, text="CPU (SW)", variable=radio_encoder_var, value=1, font=('Helvetica bold', 18))
-radiobutton_1.grid(row=1, column=0)
-radiobutton_2 = customtkinter.CTkRadioButton(master=app, text="AMD (HW)", variable=radio_encoder_var, value=2, text_color=red, font=('Helvetica bold', 18))
-radiobutton_2.grid(row=1, column=1)
-radiobutton_3 = customtkinter.CTkRadioButton(master=app, text="Nvidia (HW)", variable=radio_encoder_var, value=3, text_color=green, font=('Helvetica bold', 18))
-radiobutton_3.grid(row=1, column=2)
-radiobutton_4 = customtkinter.CTkRadioButton(master=app, text="Intel (HW)", variable=radio_encoder_var, value=4, text_color=blue, font=('Helvetica bold', 18))
-radiobutton_4.grid(row=1, column=3)
+radio_configs = [
+    (1, "CPU (SW)", None),
+    (2, "AMD (HW)", red),
+    (3, "Nvidia (HW)", green),
+    (4, "Intel (HW)", blue),
+]
+for value, text, color in radio_configs:
+    kwargs = {"master": app, "text": text, "variable": radio_encoder_var, "value": value, "font": ('Helvetica bold', 18)}
+    if color:
+        kwargs["text_color"] = color
+    rb = customtkinter.CTkRadioButton(**kwargs)
+    rb.grid(row=1, column=value - 1)
+    encoder_radio_buttons.append(rb)
+
+radio_encoder_var.trace_add("write", on_encoder_change)
+
+target_size_frame = customtkinter.CTkFrame(master=app, fg_color="transparent")
+target_size_frame.grid(row=2, column=0, padx=20, pady=(15, 0), columnspan=4)
+target_size_prefix = customtkinter.CTkLabel(master=target_size_frame, text="Target size: ", font=('Helvetica', 16))
+target_size_prefix.grid(row=0, column=0)
+target_size_value = customtkinter.CTkLabel(master=target_size_frame, text=f"{config['target_size_mb']} MB", font=('Helvetica bold', 16))
+target_size_value.grid(row=0, column=1)
+
+target_size_slider = customtkinter.CTkSlider(master=app, from_=5, to=500, variable=target_size_var, command=update_target_size, number_of_steps=99)
+target_size_slider.grid(row=3, column=0, padx=20, pady=(0, 10), columnspan=4, sticky="ew")
+target_size_slider.bind("<ButtonRelease-1>", lambda e: save_config())
 
 warninglabel = customtkinter.CTkLabel(master=app, text=texts["description"], font=('Helvetica bold', 14))
-warninglabel.grid(row=2, column=0, padx=20, pady=20, columnspan=4)
+warninglabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
 
 selectfilebutton = customtkinter.CTkButton(master=app, text=texts["select_input"], command=lambda: select_file_to_compress(None), font=('Helvetica bold', 18))
-selectfilebutton.grid(row=3, column=0, padx=20, pady=20, columnspan=4)
+selectfilebutton.grid(row=5, column=0, padx=20, pady=20, columnspan=4)
 
 # Makes the whole program drag-n-droppable
 app.drop_target_register(DND_ALL)
 app.dnd_bind("<<Drop>>", get_dnd_path)
 
 progresslabel = customtkinter.CTkLabel(master=app, text="", font=('Helvetica bold', 18))
-progresslabel.grid(row=4, column=0, padx=20, pady=20, columnspan=4)
+progresslabel.grid(row=6, column=0, padx=20, pady=20, columnspan=4)
 
 if (len(argv) == 2): select_file_to_compress(argv[1].replace("\\", "/"))
 
