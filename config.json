@@ -1,6 +1,6 @@
 {
     "encoding_choice": 2,
-    "target_size_mb": "260",
+    "target_size_mb": "245",
     "target_resolution": "1366:768",
     "target_audio_bitrate": "32",
     "target_audio_codec": "libopus",
