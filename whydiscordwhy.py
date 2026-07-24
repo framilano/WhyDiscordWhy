@@ -25,7 +25,7 @@ if IS_WINDOWS:
 # Module-level constants & config
 # ---------------------------------------------------------------------------
 
-base_path = path.dirname(path.abspath(__file__))
+base_path = path.dirname(path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
 config = load(open(base_path + "/config.json", "r"))
 ffmpeg_map = config["ffmpeg_mapping"]["nt"] if IS_WINDOWS else config["ffmpeg_mapping"]["nx"]
 _target_size_efficiency = float(config["target_size_efficiency"])
