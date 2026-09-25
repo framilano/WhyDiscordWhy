@@ -48,4 +48,4 @@ sudo pacman -Sy --needed tk
 ```
 
 ## AI Stuff
-I'll use this project as an AI background, the slider to select the target size has been added using OpenCode with DeepSeek V4 Flash Free, this is the only thing that has been added with AI, the rest of the application is purely made by humans (me)
+I'll use this project as an AI playground, the slider to select the target size has been added using OpenCode with DeepSeek V4 Flash Free, this is the only thing that has been added with AI, the rest of the application is purely made by humans (me)
