@@ -7,7 +7,7 @@
 - Tries its best using ffmpeg HEVC/X265 encoders to reduce video file size to less than 10MB. 
 - Uses [ffmpeg 2-pass encoding](https://trac.ffmpeg.org/wiki/Encode/H.265#Two-PassEncoding) procedure to reach the required size.
 - Supports GPU encoding with AMD/NVIDIA/INTEL GPUs, these encoders don't support 2-pass encoding, so the generated file size could be bigger than 10MB. Of course GPU encoding is way faster in most cases.
-
+- On Windows WhyDiscordWhy is already bundled with ffmpeg full release with all encoders (including CPU AV1 `libsvtav1`)
 
 ## How to use
 https://github.com/user-attachments/assets/043ffb47-97ac-41b8-a21e-4ad11fa2cc59

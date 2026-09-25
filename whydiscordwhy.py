@@ -14,7 +14,7 @@ from psutil import process_iter
 from json import load, dump
 from sys import argv
 from re import search
-
+import sys
 # Platform-specific imports
 IS_WINDOWS = name == 'nt'
 if IS_WINDOWS:
